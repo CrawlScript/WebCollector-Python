@@ -4,19 +4,32 @@ from webcollector.model import CrawlDatum
 
 class Generator(object):
     def next(self):
-        pass
-
-
-class StatusGenerator(Generator):
-    def next(self):
         while True:
             crawl_datum = self._next()
             if crawl_datum is None:
-                return None
-            if crawl_datum.status == CrawlDatum.STATUS_DB_SUCCESS:
-                continue
-            else:
                 return crawl_datum
+            else:
+                if self.generator_filter is None:
+                    return crawl_datum
+                else:
+                    crawl_datum = self.generator_filter.filter(crawl_datum)
+                    if crawl_datum is None:
+                        continue
+                    else:
+                        return crawl_datum
 
-    def _next(self) -> CrawlDatum:
+    def _next(self):
         return None
+
+
+class GeneratorFilter(object):
+    def filter(self, crawl_datum):
+        pass
+
+
+class StatusGeneratorFilter(GeneratorFilter):
+    def filter(self, crawl_datum):
+        if crawl_datum.status != CrawlDatum.STATUS_DB_SUCCESS:
+            return crawl_datum
+        else:
+            return None

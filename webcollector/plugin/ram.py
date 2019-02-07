@@ -1,7 +1,7 @@
 # coding=utf-8
-from webcollector.crawl import Crawler
+from webcollector.crawl import AutoDetectCrawler
 from webcollector.dbmanager import DBManager
-from webcollector.generate import StatusGenerator
+from webcollector.generate import Generator
 from webcollector.model import CrawlDatum
 
 
@@ -12,7 +12,7 @@ class RamDB(object):
         self.detect_db = None
 
 
-class RamDBGenerator(StatusGenerator):
+class RamDBGenerator(Generator):
 
     def __init__(self, ram_db):
         self.ram_db = ram_db
@@ -37,6 +37,9 @@ class RamDBManager(DBManager):
                 seed = CrawlDatum(seed)
             self.ram_db.crawl_db[seed.key] = seed
 
+    def create_generator(self):
+        return RamDBGenerator(self.ram_db)
+
     def write_crawl(self, crawl_datum):
         if crawl_datum.key not in self.ram_db.crawl_db:
             self.ram_db.crawl_db[crawl_datum.key] = crawl_datum
@@ -45,18 +48,28 @@ class RamDBManager(DBManager):
         self.ram_db.fetch_db = {}
         self.ram_db.detect_db = {}
 
-    def close_fetch_and_detect(self):
-        pass
-
     def write_fetch(self, crawl_datum):
         self.ram_db.fetch_db[crawl_datum.key] = crawl_datum
 
     def write_detect(self, crawl_datum):
         self.ram_db.detect_db[crawl_datum.key] = crawl_datum
 
+    def merge(self):
+        print("merging......")
+        if self.ram_db.fetch_db is not None:
+            for crawl_datum in self.ram_db.fetch_db.values():
+                self.ram_db.crawl_db[crawl_datum.key] = crawl_datum
+            self.ram_db.fetch_db = None
 
-class RamCrawler(Crawler):
-    def __init__(self, ):
+        if self.ram_db.detect_db is not None:
+            for crawl_datum in self.ram_db.detect_db.values():
+                if crawl_datum.key not in self.ram_db.crawl_db:
+                    self.ram_db.crawl_db[crawl_datum.key] = crawl_datum
+            self.ram_db.detect_db = None
+
+
+class RamCrawler(AutoDetectCrawler):
+    def __init__(self, auto_detect):
         self.ram_db = RamDB()
-        super().__init__(RamDBManager(self.ram_db), RamDBGenerator(self.ram_db))
+        super().__init__(RamDBManager(self.ram_db), auto_detect)
 
