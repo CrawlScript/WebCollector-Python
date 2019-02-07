@@ -1,4 +1,6 @@
 # coding=utf-8
+from urllib.parse import urljoin
+
 import chardet
 
 
@@ -11,17 +13,24 @@ class CrawlDatum(object):
     STATUS_DB_UNEXECUTED = 0
     STATUS_DB_FAILED = 1
     STATUS_DB_SUCCESS = 5
-    CODE_NOT_SET = -1;
+    CODE_NOT_SET = -1
 
-    def __init__(self, url, key=None, meta_dict=None, code=CODE_NOT_SET, status=STATUS_DB_UNEXECUTED):
+    META_KEY_SYS_TYPE = "sys_type"
+
+    def __init__(self, url, key=None, type=None, meta_dict=None, code=CODE_NOT_SET, status=STATUS_DB_UNEXECUTED):
         self.url = url
         self.key = key if key is not None else url
+        self.type = type
         self.meta_dict = meta_dict
         self.code = code
         self.status = status
 
     def set_key(self, key):
         self.key = key
+        return self
+
+    def set_type(self, type):
+        self.type = type
         return self
 
     def set_url(self, url):
@@ -73,9 +82,6 @@ class CrawlDatums(list):
         self.extend_and_return(url_or_datums)
 
 
-
-
-
 # A Page corresponds to the response of a http request
 class Page(object):
     def __init__(self, crawl_datum, content, content_type=None, http_charset=None):
@@ -87,6 +93,9 @@ class Page(object):
         self._html = None
         self._detected_charset = None
         self._doc = None
+
+    def abs_url(self, abs_or_relative_url):
+        return urljoin(self.url, abs_or_relative_url)
 
     @property
     def code(self):
@@ -112,12 +121,17 @@ class Page(object):
 
     @property
     def html(self):
-        return self.decode_content()
-
-    def decode_content(self, charset=None):
         # cache
         if self._html is not None:
             return self._html
+        self._html = self.decode_content()
+        return self._html
+
+    @property
+    def type(self):
+        return self.crawl_datum.type
+
+    def decode_content(self, charset=None):
         # None Content
         if self.content is None:
             return None
