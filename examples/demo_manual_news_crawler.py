@@ -17,7 +17,7 @@ class NewsCrawler(wc.RamCrawler):
             content = page.select("div.markdown-body")[0].text.replace("\n", " ").strip()
             print("\nURL: ", page.url)
             print("TITLE: ", title)
-            print("CONTENT: ", content)
+            print("CONTENT: ", content[:50], "...")
 
 
 crawler = NewsCrawler()
