@@ -10,6 +10,7 @@ setup(
         ]
     ),
     install_requires=[
+        "html5lib",
         "aiohttp",
         "BeautifulSoup4"
     ],
