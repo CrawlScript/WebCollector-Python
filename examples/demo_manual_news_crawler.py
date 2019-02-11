@@ -1,8 +1,8 @@
 # coding=utf-8
-from webcollector.plugin.ram import RamCrawler
+import webcollector as wc
 
 
-class NewsCrawler(RamCrawler):
+class NewsCrawler(wc.RamCrawler):
     def __init__(self):
         super().__init__(auto_detect=False)
         self.num_threads = 10
@@ -18,8 +18,6 @@ class NewsCrawler(RamCrawler):
             print("\nURL: ", page.url)
             print("TITLE: ", title)
             print("CONTENT: ", content)
-
-
 
 
 crawler = NewsCrawler()

@@ -3,11 +3,10 @@ from urllib.parse import urljoin
 
 from webcollector.fetch import Fetcher
 from webcollector.generate import StatusGeneratorFilter
-from webcollector.model import Page, CrawlDatums, CrawlDatum
+from webcollector.model import Page, CrawlDatums
 from webcollector.utils import RegexRule
 
 import logging
-import sys
 import time
 
 logger = logging.getLogger(__name__)
@@ -32,9 +31,9 @@ class Crawler(object):
         return crawl_datums
 
     # def add_seed_and_return(self, url_or_datum):
-        # crawl_datum = CrawlDatum.convert_from_item(url_or_datum)
-        # self.seeds.append(crawl_datum)
-        # return crawl_datum
+    # crawl_datum = CrawlDatum.convert_from_item(url_or_datum)
+    # self.seeds.append(crawl_datum)
+    # return crawl_datum
 
     # def add_seeds_and_return(self, urls_or_datums):
     #     crawl_datums = CrawlDatum.convert_from_list(urls_or_datums)
@@ -95,4 +94,3 @@ class AutoDetectCrawler(Crawler):
                 abs_href = urljoin(page.url, href)
                 if self.regex_rule.matches(abs_href):
                     detected.append(abs_href)
-

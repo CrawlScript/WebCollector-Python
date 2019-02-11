@@ -1,6 +1,5 @@
 # coding=utf-8
 from urllib.parse import urljoin
-import re
 import chardet
 from bs4 import BeautifulSoup
 

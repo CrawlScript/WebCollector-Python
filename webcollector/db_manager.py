@@ -1,6 +1,4 @@
 # coding=utf-8
-from webcollector.generate import Generator
-from webcollector.model import CrawlDatum
 
 
 class DBManager(object):
@@ -25,9 +23,3 @@ class DBManager(object):
 
     def create_generator(self):
         return None
-
-
-
-
-
-
