@@ -27,3 +27,66 @@ pip install https://github.com/CrawlScript/WebCollector-Python/archive/master.zi
 
 + [demo_auto_news_crawler.py](examples/demo_auto_news_crawler.py)
 + [demo_manual_news_crawler.py](examples/demo_manual_news_crawler.py)
+
+## Quickstart
+
+### Automatically Detecting URLs
+
+[demo_auto_news_crawler.py](examples/demo_auto_news_crawler.py):
+
+```python
+# coding=utf-8
+import webcollector as wc
+
+
+class NewsCrawler(wc.RamCrawler):
+    def __init__(self):
+        super().__init__(auto_detect=True)
+        self.num_threads = 10
+        self.add_seed("https://github.blog/")
+        self.add_regex("https://github.blog/[0-9]+.*")
+
+    def visit(self, page, detected):
+        if page.match_url("https://github.blog/[0-9]+.*"):
+            title = page.select("h1.lh-condensed")[0].text.strip()
+            content = page.select("div.markdown-body")[0].text.replace("\n", " ").strip()
+            print("\nURL: ", page.url)
+            print("TITLE: ", title)
+            print("CONTENT: ", content[:50], "...")
+
+
+crawler = NewsCrawler()
+crawler.start(10)
+
+```
+
+### Manually Detecting URLs
+
+[demo_manual_news_crawler.py](examples/demo_manual_news_crawler.py):
+
+```python
+# coding=utf-8
+import webcollector as wc
+
+
+class NewsCrawler(wc.RamCrawler):
+    def __init__(self):
+        super().__init__(auto_detect=False)
+        self.num_threads = 10
+        self.add_seed("https://github.blog/")
+
+    def visit(self, page, detected):
+
+        detected.extend(page.links("https://github.blog/[0-9]+.*"))
+
+        if page.match_url("https://github.blog/[0-9]+.*"):
+            title = page.select("h1.lh-condensed")[0].text.strip()
+            content = page.select("div.markdown-body")[0].text.replace("\n", " ").strip()
+            print("\nURL: ", page.url)
+            print("TITLE: ", title)
+            print("CONTENT: ", content[:50], "...")
+
+
+crawler = NewsCrawler()
+crawler.start(10)
+```
