@@ -6,6 +6,12 @@ from webcollector.generate import StatusGeneratorFilter
 from webcollector.model import Page, CrawlDatums, CrawlDatum
 from webcollector.utils import RegexRule
 
+import logging
+import sys
+import time
+
+logger = logging.getLogger(__name__)
+
 
 class Crawler(object):
     def __init__(self, db_manager, generator_filter=StatusGeneratorFilter()):
@@ -13,29 +19,32 @@ class Crawler(object):
         self.generator_filter = generator_filter
         self.fetcher = None
         self.num_threads = 10
-        self.seeds = []
+        self.seeds = CrawlDatums()
 
-    def add_seed(self, url_or_datum):
-        self.add_seed_and_return(url_or_datum)
+    def add_seed(self, url_or_datum, type=None):
+        return self.seeds.append(url_or_datum).set_type(type)
 
-    def add_seed_and_return(self, url_or_datum):
-        crawl_datum = CrawlDatum.convert_from_item(url_or_datum)
-        self.seeds.append(crawl_datum)
-        return crawl_datum
-
-    def add_seeds(self, urls_or_datums):
-        self.add_seeds_and_return(urls_or_datums)
-
-    def add_seeds_and_return(self, urls_or_datums):
-        crawl_datums = CrawlDatum.convert_from_list(urls_or_datums)
-        self.seeds.extend(crawl_datums)
+    def add_seeds(self, urls_or_datums, type=None):
+        crawl_datums = []
+        for url_or_datum in urls_or_datums:
+            crawl_datum = self.add_seed(url_or_datum, type=type)
+            crawl_datums.append(crawl_datum)
         return crawl_datums
+
+    # def add_seed_and_return(self, url_or_datum):
+        # crawl_datum = CrawlDatum.convert_from_item(url_or_datum)
+        # self.seeds.append(crawl_datum)
+        # return crawl_datum
+
+    # def add_seeds_and_return(self, urls_or_datums):
+    #     crawl_datums = CrawlDatum.convert_from_list(urls_or_datums)
+    #     self.seeds.extend(crawl_datums)
+    #     return crawl_datums
 
     def execute(self, page, detected):
         pass
 
     def start_once(self, depth_index):
-        print("start crawling at depth {}".format(depth_index))
         self.db_manager.merge()
         self.fetcher = Fetcher(
             self.db_manager,
@@ -43,14 +52,21 @@ class Crawler(object):
             generator_filter=self.generator_filter,
             num_threads=self.num_threads
         )
-        self.fetcher.start()
+        return self.fetcher.start()
 
-    def start(self, num_depth):
+    def start(self, depth):
         if len(self.seeds) == 0:
             raise Exception("Please add at least one seed")
         self.db_manager.inject(self.seeds)
-        for depth_index in range(num_depth):
-            self.start_once(depth_index)
+        for depth_index in range(depth):
+            print("start depth {}".format(depth_index))
+            start_time = time.time()
+            num_generated = self.start_once(depth_index)
+            cost_time = time.time() - start_time
+            logger.info("depth {} finish: \n\ttotal urls:\t{}\n\ttotal time:\t{} seconds"
+                        .format(depth_index, num_generated, cost_time))
+            if num_generated == 0:
+                break
 
 
 class AutoDetectCrawler(Crawler):

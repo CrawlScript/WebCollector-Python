@@ -2,8 +2,10 @@
 import queue
 import asyncio
 import aiohttp
-
+import logging
 from webcollector.model import Page, CrawlDatums, CrawlDatum
+
+logger = logging.getLogger(__name__)
 
 
 class Fetcher(object):
@@ -32,6 +34,7 @@ class Fetcher(object):
     def start(self):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.async_start())
+        return self.generator.num_generated
 
     def feed(self):
         for i in range(self.buffer_size):
@@ -50,21 +53,25 @@ class Fetcher(object):
                 self.feed()
             else:
                 crawl_datum = self.fetch_queue.get(block=False)
-                async with session.get(crawl_datum.url) as response:
-                    code = response.status
-                    content = await response.content.read()
-                    encoding = response.get_encoding()
-                    content_type = response.content_type
-
+                try:
+                    async with session.get(crawl_datum.url) as response:
+                        code = response.status
+                        content = await response.content.read()
+                        encoding = response.get_encoding()
+                        content_type = response.content_type
                     crawl_datum.code = code
-                page = Page(crawl_datum, content, content_type=content_type, http_charset=encoding)
-                detected = CrawlDatums()
-                execute_func(page, detected)
+                    page = Page(crawl_datum, content, content_type=content_type, http_charset=encoding)
+                    detected = CrawlDatums()
+                    execute_func(page, detected)
 
-                crawl_datum.status = CrawlDatum.STATUS_DB_SUCCESS
-                self.db_manager.write_fetch(crawl_datum)
+                    crawl_datum.status = CrawlDatum.STATUS_DB_SUCCESS
+                    self.db_manager.write_fetch(crawl_datum)
 
-                for detected_crawl_datum in detected:
-                    self.db_manager.write_detect(detected_crawl_datum)
+                    for detected_crawl_datum in detected:
+                        self.db_manager.write_detect(detected_crawl_datum)
+                    logger.info("done: {}".format(crawl_datum.brief_info()))
+                except Exception as e:
+                    logger.error("failed: {}".format(crawl_datum.brief_info()), exc_info=True)
+
 
 

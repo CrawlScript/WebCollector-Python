@@ -1,6 +1,6 @@
 # coding=utf-8
-from webcollector.crawl import AutoDetectCrawler
-from webcollector.dbmanager import DBManager
+from webcollector.crawler import AutoDetectCrawler
+from webcollector.db_manager import DBManager
 from webcollector.generate import Generator
 from webcollector.model import CrawlDatum
 
@@ -15,6 +15,7 @@ class RamDB(object):
 class RamDBGenerator(Generator):
 
     def __init__(self, ram_db):
+        super().__init__()
         self.ram_db = ram_db
         self.iter = None
 

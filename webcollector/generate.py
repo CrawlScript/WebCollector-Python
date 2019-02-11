@@ -3,6 +3,10 @@ from webcollector.model import CrawlDatum
 
 
 class Generator(object):
+
+    def __init__(self):
+        self.num_generated = 0
+
     def next(self):
         while True:
             crawl_datum = self._next()
@@ -16,6 +20,7 @@ class Generator(object):
                     if crawl_datum is None:
                         continue
                     else:
+                        self.num_generated += 1
                         return crawl_datum
 
     def _next(self):

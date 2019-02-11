@@ -2,10 +2,12 @@
 
 import re
 
-from webcollector.model import CrawlDatum
 
-
-
+def url_matches(url, url_regex):
+    if isinstance(url_regex, str):
+        return re.fullmatch(url_regex, url) is not None
+    else:
+        return url_regex.fullmatch(url) is not None
 
 
 class RegexRule(object):

@@ -1,15 +1,15 @@
 # coding=utf-8
 from urllib.parse import urljoin
-
+import re
 import chardet
-
-
-# A CrawlDatum corresponds to a task description (usually for a webpage)
 from bs4 import BeautifulSoup
 
 
-class CrawlDatum(object):
+# A CrawlDatum corresponds to a task description (usually for a webpage)
+from webcollector.utils import url_matches
 
+
+class CrawlDatum(object):
     STATUS_DB_UNEXECUTED = 0
     STATUS_DB_FAILED = 1
     STATUS_DB_SUCCESS = 5
@@ -47,6 +47,12 @@ class CrawlDatum(object):
         self.meta_dict[meta_key] = meta_value
         return self
 
+    def match_type(self, type):
+        return self.type == type
+
+    def match_url(self, url_regex):
+        return url_matches(self.url, url_regex)
+
     @classmethod
     def convert_from_item(cls, url_or_datum):
         if isinstance(url_or_datum, CrawlDatum):
@@ -54,32 +60,41 @@ class CrawlDatum(object):
         else:
             return CrawlDatum(url_or_datum)
 
-    @classmethod
-    def convert_from_list(cls, urls_or_datums):
-        return [CrawlDatum.convert_from_item(item) for item in urls_or_datums]
+    def brief_info(self):
+        infos = []
+        if self.code != CrawlDatum.CODE_NOT_SET:
+            infos.append("[{}]".format(self.code))
+        infos.append("Key: {} (URL: {})".format(self.key, self.url))
+        return " ".join(infos)
 
 
 class CrawlDatums(list):
 
     def append(self, url_or_datum):
-        self.append_and_return(url_or_datum)
-
-    def append_and_return(self, url_or_datum):
         if isinstance(url_or_datum, CrawlDatum):
-           crawl_datum = url_or_datum
+            crawl_datum = url_or_datum
         else:
             crawl_datum = CrawlDatum(url_or_datum)
         super().append(crawl_datum)
         return crawl_datum
 
-    def extend_and_return(self, url_or_datums):
+    def extend(self, url_or_datums):
         crawl_datums = []
         for url_or_datum in url_or_datums:
-            crawl_datums.append(self.append_and_return(url_or_datum))
+            crawl_datums.append(self.append(url_or_datum))
         return crawl_datums
 
-    def extend(self, url_or_datums):
-        self.extend_and_return(url_or_datums)
+    def set_type(self, type):
+        for crawl_datum in self:
+            crawl_datum.type = type
+
+    def set_meta_item(self, meta_key, meta_value):
+        for crawl_datum in self:
+            crawl_datum.set_meta_item(meta_key, meta_value)
+
+    @classmethod
+    def convert_from_list(cls, urls_or_datums):
+        return [CrawlDatum.convert_from_item(item) for item in urls_or_datums]
 
 
 # A Page corresponds to the response of a http request
@@ -131,6 +146,15 @@ class Page(object):
     def type(self):
         return self.crawl_datum.type
 
+    def links(self, url_regex=None):
+        a_eles = self.doc.select("a[href]")
+        urls = [self.abs_url(a_ele["href"]) for a_ele in a_eles]
+        if url_regex is None:
+            return urls
+        else:
+            urls = [url for url in urls if url_matches(url, url_regex)]
+            return urls
+
     def decode_content(self, charset=None):
         # None Content
         if self.content is None:
@@ -150,3 +174,9 @@ class Page(object):
                 return self.content.decode("utf-8")
 
         return self.content.decode(self._detected_charset)
+
+    def match_type(self, type):
+        return self.crawl_datum.match_type(type)
+
+    def match_url(self, url_regex):
+        return self.crawl_datum.match_url(url_regex)
