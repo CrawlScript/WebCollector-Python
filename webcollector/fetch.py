@@ -13,11 +13,13 @@ class Fetcher(object):
                  requester,
                  execute_func,
                  generator_filter=None,
+                 detected_filter=None,
                  num_threads=10):
         self.fetch_queue = None
         self.feed_stopped = None
         self.generator = None
         self.generator_filter = generator_filter
+        self.detected_filter = detected_filter
         self.feeder = None
         self.buffer_size = 1000
         self.db_manager = db_manager
@@ -66,7 +68,16 @@ class Fetcher(object):
                     crawl_datum.status = CrawlDatum.STATUS_DB_SUCCESS
                     self.db_manager.write_fetch(crawl_datum)
 
-                    for detected_crawl_datum in detected:
+                    if self.detected_filter is not None:
+                        filtered_detected = CrawlDatums()
+                        for detected_crawl_datum in detected:
+                            detected_crawl_datum = self.detected_filter.filter(detected_crawl_datum)
+                            if detected_crawl_datum is not None:
+                                filtered_detected.append(detected_crawl_datum)
+                    else:
+                        filtered_detected = detected
+
+                    for detected_crawl_datum in filtered_detected:
                         self.db_manager.write_detect(detected_crawl_datum)
                     logger.info("done: {}".format(crawl_datum.brief_info()))
                 except Exception as e:

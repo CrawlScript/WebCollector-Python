@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="webcollector",
-    version="0.0.2-alpha",
+    version="0.0.3-alpha",
     author="Jun Hu",
     packages=find_packages(
         exclude=[

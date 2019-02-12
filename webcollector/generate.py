@@ -1,11 +1,13 @@
 # coding=utf-8
 from webcollector.model import CrawlDatum
+from webcollector.filter import Filter
 
 
 class Generator(object):
 
     def __init__(self):
         self.num_generated = 0
+        self.generator_filter = None
 
     def next(self):
         while True:
@@ -27,12 +29,7 @@ class Generator(object):
         return None
 
 
-class GeneratorFilter(object):
-    def filter(self, crawl_datum):
-        pass
-
-
-class StatusGeneratorFilter(GeneratorFilter):
+class StatusGeneratorFilter(Filter):
     def filter(self, crawl_datum):
         if crawl_datum.status != CrawlDatum.STATUS_DB_SUCCESS:
             return crawl_datum

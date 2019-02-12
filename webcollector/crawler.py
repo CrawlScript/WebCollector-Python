@@ -17,10 +17,12 @@ class Crawler(object):
     def __init__(self,
                  db_manager,
                  requester=HttpRequester(),
-                 generator_filter=StatusGeneratorFilter()):
+                 generator_filter=StatusGeneratorFilter(),
+                 detected_filter=None):
         self.db_manager = db_manager
         self.requester = requester
         self.generator_filter = generator_filter
+        self.detected_filter = detected_filter
         self.fetcher = None
         self.num_threads = 10
         self.seeds = CrawlDatums()
@@ -55,6 +57,7 @@ class Crawler(object):
             self.requester,
             execute_func=self.execute,
             generator_filter=self.generator_filter,
+            detected_filter=self.detected_filter,
             num_threads=self.num_threads
         )
         return self.fetcher.start()
