@@ -1,7 +1,6 @@
 # coding=utf-8
 import queue
 import asyncio
-import aiohttp
 import logging
 from webcollector.model import Page, CrawlDatums, CrawlDatum
 
@@ -9,7 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class Fetcher(object):
-    def __init__(self, db_manager, execute_func, generator_filter=None, num_threads=10):
+    def __init__(self,
+                 db_manager,
+                 requester,
+                 execute_func,
+                 generator_filter=None,
+                 num_threads=10):
         self.fetch_queue = None
         self.feed_stopped = None
         self.generator = None
@@ -18,6 +22,7 @@ class Fetcher(object):
         self.buffer_size = 1000
         self.db_manager = db_manager
 
+        self.requester = requester
         self.execute_func = execute_func
         self.num_threads = num_threads
 
@@ -27,8 +32,8 @@ class Fetcher(object):
         self.db_manager.init_fetch_and_detect()
         self.generator = self.db_manager.create_generator()
         self.generator.generator_filter = self.generator_filter
-        async with aiohttp.ClientSession() as session:
-            coroutines = [self.fetch_coroutine(session, self.execute_func) for _ in range(self.num_threads)]
+        async with self.requester.create_async_context_manager():
+            coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
             await asyncio.gather(*coroutines)
 
     def start(self):
@@ -45,7 +50,7 @@ class Fetcher(object):
             else:
                 self.fetch_queue.put(crawl_datum)
 
-    async def fetch_coroutine(self, session, execute_func):
+    async def fetch_coroutine(self, execute_func):
         while True:
             if self.fetch_queue.empty():
                 if self.feed_stopped:
@@ -54,13 +59,7 @@ class Fetcher(object):
             else:
                 crawl_datum = self.fetch_queue.get(block=False)
                 try:
-                    async with session.get(crawl_datum.url) as response:
-                        code = response.status
-                        content = await response.content.read()
-                        encoding = response.get_encoding()
-                        content_type = response.content_type
-                    crawl_datum.code = code
-                    page = Page(crawl_datum, content, content_type=content_type, http_charset=encoding)
+                    page = await self.requester.get_response(crawl_datum)
                     detected = CrawlDatums()
                     execute_func(page, detected)
 

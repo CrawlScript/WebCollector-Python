@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from webcollector.fetch import Fetcher
 from webcollector.generate import StatusGeneratorFilter
 from webcollector.model import Page, CrawlDatums
+from webcollector.plugin.net import HttpRequester
 from webcollector.utils import RegexRule
 
 import logging
@@ -13,8 +14,12 @@ logger = logging.getLogger(__name__)
 
 
 class Crawler(object):
-    def __init__(self, db_manager, generator_filter=StatusGeneratorFilter()):
+    def __init__(self,
+                 db_manager,
+                 requester=HttpRequester(),
+                 generator_filter=StatusGeneratorFilter()):
         self.db_manager = db_manager
+        self.requester = requester
         self.generator_filter = generator_filter
         self.fetcher = None
         self.num_threads = 10
@@ -47,6 +52,7 @@ class Crawler(object):
         self.db_manager.merge()
         self.fetcher = Fetcher(
             self.db_manager,
+            self.requester,
             execute_func=self.execute,
             generator_filter=self.generator_filter,
             num_threads=self.num_threads
@@ -70,8 +76,8 @@ class Crawler(object):
 
 class AutoDetectCrawler(Crawler):
 
-    def __init__(self, db_manager, auto_detect):
-        super().__init__(db_manager)
+    def __init__(self, db_manager, auto_detect, **kwargs):
+        super().__init__(db_manager, **kwargs)
         self.auto_detect = auto_detect
         self.regex_rule = RegexRule()
 

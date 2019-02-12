@@ -70,7 +70,7 @@ class RamDBManager(DBManager):
 
 
 class RamCrawler(AutoDetectCrawler):
-    def __init__(self, auto_detect):
+    def __init__(self, auto_detect, **kwargs):
         self.ram_db = RamDB()
-        super().__init__(RamDBManager(self.ram_db), auto_detect)
+        super().__init__(RamDBManager(self.ram_db), auto_detect, **kwargs)
 
