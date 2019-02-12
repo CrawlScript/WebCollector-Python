@@ -44,7 +44,8 @@ class NewsCrawler(wc.RamCrawler):
         super().__init__(auto_detect=True)
         self.num_threads = 10
         self.add_seed("https://github.blog/")
-        self.add_regex("https://github.blog/[0-9]+.*")
+        self.add_regex("+https://github.blog/[0-9]+.*")
+        self.add_regex("-.*#.*")  # do not detect urls that contain "#"
 
     def visit(self, page, detected):
         if page.match_url("https://github.blog/[0-9]+.*"):
@@ -57,7 +58,6 @@ class NewsCrawler(wc.RamCrawler):
 
 crawler = NewsCrawler()
 crawler.start(10)
-
 ```
 
 ### Manually Detecting URLs
