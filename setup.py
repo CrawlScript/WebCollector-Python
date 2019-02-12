@@ -14,9 +14,7 @@ setup(
         "aiohttp",
         "BeautifulSoup4"
     ],
-    description="""
-        An open source web crawler framework.
-    """,
+    description="WebCollector-Python is an open source web crawler framework based on Python.It provides some simple interfaces for crawling the Web,you can setup a multi-threaded web crawler in less than 5 minutes.",
     license="GNU General Public License v3.0 (See LICENSE)",
     url="https://github.com/CrawlScript/WebCollector-Python"
 )
