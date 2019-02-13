@@ -2,3 +2,4 @@
 **/__pycache__/
 /webcollector.egg-info/
 /dist/
+**/*.p

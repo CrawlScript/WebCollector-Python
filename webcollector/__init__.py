@@ -2,7 +2,9 @@
 import logging
 import sys
 
+from webcollector.plugin.redis import RedisCrawler
 from webcollector.plugin.ram import RamCrawler
+
 
 logging.basicConfig(
     stream=sys.stdout,

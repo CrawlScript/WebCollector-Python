@@ -31,12 +31,14 @@ class Fetcher(object):
     async def async_start(self):
         self.fetch_queue = queue.Queue()
         self.feed_stopped = False
+        self.db_manager.open()
         self.db_manager.init_fetch_and_detect()
         self.generator = self.db_manager.create_generator()
         self.generator.generator_filter = self.generator_filter
         async with self.requester.create_async_context_manager():
             coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
             await asyncio.gather(*coroutines)
+        self.db_manager.close()
 
     def start(self):
         loop = asyncio.get_event_loop()
@@ -66,7 +68,6 @@ class Fetcher(object):
                     execute_func(page, detected)
 
                     crawl_datum.status = CrawlDatum.STATUS_DB_SUCCESS
-                    self.db_manager.write_fetch(crawl_datum)
 
                     if self.detected_filter is not None:
                         filtered_detected = CrawlDatums()
@@ -82,6 +83,7 @@ class Fetcher(object):
                     logger.info("done: {}".format(crawl_datum.brief_info()))
                 except Exception as e:
                     logger.error("failed: {}".format(crawl_datum.brief_info()), exc_info=True)
+                    crawl_datum.status = CrawlDatum.STATUS_DB_FAILED
 
-
-
+                crawl_datum.num_fetched += 1
+                self.db_manager.write_fetch(crawl_datum)

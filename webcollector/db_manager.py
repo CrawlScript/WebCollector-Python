@@ -3,10 +3,7 @@
 
 class DBManager(object):
 
-    def inject(self, seeds):
-        pass
-
-    def write_crawl(self, crawl_datum):
+    def inject(self, seeds, forced=False):
         pass
 
     def init_fetch_and_detect(self):
@@ -23,3 +20,12 @@ class DBManager(object):
 
     def create_generator(self):
         return None
+
+    def clear(self):
+        pass
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass

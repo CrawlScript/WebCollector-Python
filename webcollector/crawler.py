@@ -25,17 +25,27 @@ class Crawler(object):
         self.detected_filter = detected_filter
         self.fetcher = None
         self.num_threads = 10
+        self.resumable = None
+
         self.seeds = CrawlDatums()
+        self.forced_seeds = CrawlDatums()
 
-    def add_seed(self, url_or_datum, type=None):
-        return self.seeds.append(url_or_datum).set_type(type)
+    def add_seed(self, url_or_datum, type=None, forced=False):
+        if forced:
+            return self.forced_seeds.append(url_or_datum).set_type(type)
+        else:
+            return self.seeds.append(url_or_datum).set_type(type)
 
-    def add_seeds(self, urls_or_datums, type=None):
+    def add_seeds(self, urls_or_datums, type=None, forced=False):
         crawl_datums = []
         for url_or_datum in urls_or_datums:
-            crawl_datum = self.add_seed(url_or_datum, type=type)
+            crawl_datum = self.add_seed(url_or_datum, type=type, forced=forced)
             crawl_datums.append(crawl_datum)
         return crawl_datums
+
+    def inject(self):
+        self.db_manager.inject(self.seeds, forced=False)
+        self.db_manager.inject(self.forced_seeds, forced=True)
 
     # def add_seed_and_return(self, url_or_datum):
     # crawl_datum = CrawlDatum.convert_from_item(url_or_datum)
@@ -63,9 +73,11 @@ class Crawler(object):
         return self.fetcher.start()
 
     def start(self, depth):
-        if len(self.seeds) == 0:
+        if not self.resumable:
+            self.db_manager.clear()
+        if len(self.seeds) == 0 and len(self.forced_seeds) == 0:
             raise Exception("Please add at least one seed")
-        self.db_manager.inject(self.seeds)
+        self.inject()
         for depth_index in range(depth):
             print("start depth {}".format(depth_index))
             start_time = time.time()

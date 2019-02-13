@@ -2,6 +2,7 @@
 from urllib.parse import urljoin
 import chardet
 from bs4 import BeautifulSoup
+import json
 
 
 # A CrawlDatum corresponds to a task description (usually for a webpage)
@@ -16,13 +17,20 @@ class CrawlDatum(object):
 
     META_KEY_SYS_TYPE = "sys_type"
 
-    def __init__(self, url, key=None, type=None, meta_dict=None, code=CODE_NOT_SET, status=STATUS_DB_UNEXECUTED):
+    def __init__(self, url,
+                 key=None,
+                 type=None,
+                 meta_dict=None,
+                 code=CODE_NOT_SET,
+                 status=STATUS_DB_UNEXECUTED,
+                 num_fetched=0):
         self.url = url
         self.key = key if key is not None else url
         self.type = type
         self.meta_dict = meta_dict
         self.code = code
         self.status = status
+        self.num_fetched = num_fetched
 
     def set_key(self, key):
         self.key = key
@@ -65,6 +73,37 @@ class CrawlDatum(object):
             infos.append("[{}]".format(self.code))
         infos.append("Key: {} (URL: {})".format(self.key, self.url))
         return " ".join(infos)
+
+    def to_dict(self):
+        dict_data = {
+            "url": self.url,
+            "key": self.key,
+            "type": self.type,
+            "meta_dict": self.meta_dict,
+            "code": self.code,
+            "status": self.status,
+            "num_fetched": self.num_fetched
+        }
+        return dict_data
+
+    @classmethod
+    def from_dict(cls, dict_data):
+        return CrawlDatum(
+            url=dict_data["url"],
+            key=dict_data["key"],
+            type=dict_data["type"],
+            meta_dict=dict_data["meta_dict"],
+            code=dict_data["code"],
+            status=dict_data["status"],
+            num_fetched=dict_data["num_fetched"]
+        )
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    @classmethod
+    def from_json(cls, json_str):
+        return CrawlDatum.from_dict(json.loads(json_str))
 
 
 class CrawlDatums(list):
