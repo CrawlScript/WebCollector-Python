@@ -1,6 +1,5 @@
 # coding=utf-8
 from redis import StrictRedis
-
 import webcollector as wc
 
 
@@ -11,7 +10,7 @@ class NewsCrawler(wc.RedisCrawler):
                          db_prefix="news",
                          auto_detect=True)
         self.num_threads = 10
-        self.resumable = True # you can resume crawling after shutdown
+        self.resumable = True  # you can resume crawling after shutdown
         self.add_seed("https://github.blog/")
         self.add_regex("+https://github.blog/[0-9]+.*")
         self.add_regex("-.*#.*")  # do not detect urls that contain "#"

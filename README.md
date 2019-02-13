@@ -142,7 +142,6 @@ crawler.start(10)
 ```python
 # coding=utf-8
 from redis import StrictRedis
-
 import webcollector as wc
 
 
