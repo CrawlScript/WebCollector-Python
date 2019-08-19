@@ -3,9 +3,9 @@ from webcollector.config import DEFAULT_USER_AGENT
 from webcollector.model import Page
 from webcollector.net import Requester
 import aiohttp
+import requests
 
-
-class HttpRequester(Requester):
+class AioHttpRequester(Requester):
 
     def __init__(self):
         self.session = None
@@ -32,5 +32,31 @@ class HttpRequester(Requester):
         return page
 
 
+class HttpRequester(Requester):
 
+    def __init__(self):
+        self.session = None
+
+
+    # def create_async_context_manager(self):
+    #     self.session = aiohttp.ClientSession()
+    #     return self.session
+
+    # def request(self, crawl_datum):
+    #     headers = {"User-Agent": DEFAULT_USER_AGENT}
+    #     return requests.get(crawl_datum.url, headers=headers)
+
+    def get_response(self, crawl_datum):
+        headers = {"User-Agent": DEFAULT_USER_AGENT}
+        response = requests.get(crawl_datum.url, headers=headers)
+
+        code = response.status_code
+        content = response.content
+        encoding = response.encoding
+        content_type = response.headers["Content-Type"]
+
+        crawl_datum.code = code
+        page = Page(crawl_datum, content, content_type=content_type, http_charset=encoding)
+        
+        return page
 

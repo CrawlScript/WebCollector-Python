@@ -28,6 +28,9 @@ class Fetcher(object):
         self.execute_func = execute_func
         self.num_threads = num_threads
 
+        self.loop = None
+
+
     async def async_start(self):
         self.fetch_queue = queue.Queue()
         self.feed_stopped = False
@@ -35,14 +38,19 @@ class Fetcher(object):
         self.db_manager.init_fetch_and_detect()
         self.generator = self.db_manager.create_generator()
         self.generator.generator_filter = self.generator_filter
-        async with self.requester.create_async_context_manager():
-            coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
-            await asyncio.gather(*coroutines)
+
+        # async with self.requester.create_async_context_manager():
+        #     coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
+        #     await asyncio.gather(*coroutines)
+
+        coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
+        await asyncio.gather(*coroutines)
+
         self.db_manager.close()
 
     def start(self):
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.async_start())
+        self.loop = asyncio.get_event_loop()
+        self.loop.run_until_complete(self.async_start())
         return self.generator.num_generated
 
     def feed(self):
@@ -63,7 +71,10 @@ class Fetcher(object):
             else:
                 crawl_datum = self.fetch_queue.get(block=False)
                 try:
-                    page = await self.requester.get_response(crawl_datum)
+                    # loop = asyncio.get_event_loop()
+                    request_future = self.loop.run_in_executor(None, self.requester.get_response, crawl_datum)
+                    page = await request_future
+                    # page = await self.requester.get_response(crawl_datum)
                     detected = CrawlDatums()
                     execute_func(page, detected)
 
