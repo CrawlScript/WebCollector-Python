@@ -176,7 +176,7 @@ crawler.start(10)
 [demo_custom_http_request.py](examples/demo_custom_http_request.py):
 
 
-```
+```python
 # coding=utf-8
 
 import webcollector as wc
