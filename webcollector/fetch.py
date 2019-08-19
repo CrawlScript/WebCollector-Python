@@ -42,10 +42,9 @@ class Fetcher(object):
         # async with self.requester.create_async_context_manager():
         #     coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
         #     await asyncio.gather(*coroutines)
-
-        coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
-        await asyncio.gather(*coroutines)
-
+        with self.requester:
+            coroutines = [self.fetch_coroutine(self.execute_func) for _ in range(self.num_threads)]
+            await asyncio.gather(*coroutines)
         self.db_manager.close()
 
     def start(self):
