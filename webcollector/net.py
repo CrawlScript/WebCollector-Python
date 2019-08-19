@@ -11,6 +11,3 @@ class Requester(object):
 
     def get_response(self, crawl_datum):
         raise NotImplementedError()
-
-    def create_async_context_manager(self):
-        return None
