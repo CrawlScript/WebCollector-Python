@@ -14,7 +14,3 @@ class Requester(object):
 
     def create_async_context_manager(self):
         return None
-
-
-with Requester() as r:
-    print(r)
